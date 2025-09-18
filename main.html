@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title data-i18n="title">Shortcut Manager for Windows – Start faster. Work smarter.</title>
+  <meta name="description" content="Create custom hotkeys for apps, folders, files, scripts and URLs. Two startup modes (Fast/Standard), multilingual UI (EN/DE/ES/FR), modern & professional." />
+  <meta name="theme-color" content="#2e7d73" />
+  <link rel="icon" href="./favicon.ico" />
+  <style>
+    /* ===============
+       Design tokens
+       =============== */
+    :root{
+  /* Core brand (teal/green from your sample) */
+  --brand:#2e7d73;         /* primary */
+  --brand-600:#276a62;     /* hover */
+  --brand-700:#205750;     /* deep */
+
+  /* Surfaces (dark theme first) */
+  --bg:#0f1918;            /* page background */
+  --layer:#12211e;         /* section bg */
+  --card:#152a26;          /* cards */
+
+  /* Text */
+  --ink:#eaf6f2;           /* main text */
+  --muted:#a5c7bf;         /* secondary */
+
+  /* Misc */
+  --border:rgba(255,255,255,.10);
+  --radius:14px;
+  --shadow:0 12px 28px rgba(0,0,0,.35);
+  --maxw:1200px;
+  --pad:22px;
+
+  /* Navbar theming knobs */
+  --nav-bg: linear-gradient(180deg, rgba(32,70,64,.55), rgba(32,70,64,.35));
+  --nav-bg-scrolled: linear-gradient(180deg, rgba(32,70,64,.75), rgba(32,70,64,.62));
+}
+    @media (prefers-color-scheme: light){
+  :root{
+    --bg:#f5fbf9; --layer:#eef7f4; --card:#ffffff; --ink:#0b1614; --muted:#4e6b65; --border:#e2efea; --shadow:0 6px 24px rgba(0,0,0,.08);
+
+    /* Navbar (light) */
+    --nav-bg: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.10));
+    --nav-bg-scrolled: linear-gradient(180deg, rgba(255,255,255,.32), rgba(255,255,255,.24));
+  }
+}
+    }
+
+    /* ===== Base ===== */
+    *,*::before,*::after{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial; background:var(--bg); color:var(--ink); line-height:1.6}
+    img{max-width:100%; display:block}
+    a{color:var(--brand); text-decoration:none}
+    a:hover{text-decoration:underline}
+    .container{max-width:var(--maxw); margin-inline:auto; padding:0 var(--pad)}
+    .grid{display:grid; gap:20px}
+    .btn{display:inline-flex; align-items:center; gap:.6rem; padding:.9rem 1.1rem; border-radius:12px; background:var(--brand); color:#fff; border:1px solid transparent; box-shadow:0 8px 20px rgba(46,125,115,.25); font-weight:600}
+    .btn:hover{background:var(--brand-600)}
+    .btn.secondary{background:transparent; color:var(--ink); border:1px solid var(--border)}
+    .badge{display:inline-flex; align-items:center; gap:.4rem; font-size:.85rem; padding:.34rem .6rem; border-radius:999px; border:1px solid var(--border); background:rgba(46,125,115,.12); color:var(--brand)}
+    .pill{display:inline-block; font-size:.74rem; padding:.3rem .55rem; border-radius:999px; background:rgba(255,255,255,.06); border:1px solid var(--border); color:var(--muted)}
+    .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow)}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+    /* ===== Navbar ===== */
+    .nav{position:sticky; top:0; z-index:100; background:var(--nav-bg); border-bottom:1px solid var(--border); backdrop-filter:saturate(130%) blur(10px); box-shadow:0 10px 20px rgba(0,0,0,.18)}
+    .nav.is-scrolled{background:var(--nav-bg-scrolled); border-bottom:1px solid rgba(255,255,255,.12); box-shadow:0 14px 28px rgba(0,0,0,.25)}
+    .nav .inner{display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 0}
+    .brand{display:flex; align-items:center; gap:.75rem}
+    .brand .logo{width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,var(--brand),var(--brand-700)); box-shadow:0 4px 12px rgba(46,125,115,.45)}
+    .nav ul{display:flex; gap:1.2rem; list-style:none; margin:0; padding:0}
+    .nav a{color:var(--ink); font-weight:600; opacity:.9}
+    .nav a:hover{opacity:1; text-decoration:underline}
+    .hamburger{display:none}
+    .langpick{background:transparent; color:var(--ink); border:1px solid var(--border); border-radius:10px; padding:.48rem .65rem}
+    .nav .btn{padding:.7rem 1rem}
+
+    @media (max-width: 960px){
+      .nav ul{display:none}
+      .hamburger{display:block; background:transparent; border:1px solid var(--border); border-radius:10px; padding:.6rem}
+      .mobile{display:none; border-top:1px solid var(--border); background:var(--layer); box-shadow:0 20px 32px rgba(0,0,0,.35)}
+      .mobile.open{display:block}
+      .mobile a{display:block; padding:14px var(--pad); font-weight:600; border-bottom:1px solid var(--border)}
+      .mobile .langwrap{padding:12px var(--pad); border-bottom:1px solid var(--border)}
+      .mobile .cta{padding:14px var(--pad)}
+    }
+
+    /* ===== Hero ===== */
+    .hero{position:relative; padding:72px 0 32px; background: radial-gradient(700px 300px at 70% -10%, rgba(46,125,115,.18), transparent 65%) , radial-gradient(700px 300px at 10% 0%, rgba(46,125,115,.08), transparent 55%)}
+    .hero .wrap{display:grid; grid-template-columns: 1.15fr .85fr; gap:28px; align-items:center}
+    .headline{font-size:clamp(2rem, 4vw, 3rem); line-height:1.1; letter-spacing:-.02em; margin:10px 0}
+    .sub{color:var(--muted); font-size:1.05rem}
+    .cta-row{display:flex; gap:.8rem; flex-wrap:wrap; margin-top:1.1rem}
+    .hero .shot{padding:14px}
+    .hero .shot img{border-radius:12px; border:1px solid var(--border)}
+    @media (max-width:960px){
+      .hero{padding:56px 0 16px}
+      .hero .wrap{grid-template-columns: 1fr}
+    }
+
+    /* ===== Sections ===== */
+    section{padding:56px 0}
+    .section-title{font-size:1.8rem; margin:0 0 8px}
+    .section-sub{color:var(--muted); margin:0 0 18px}
+
+    /* Features */
+    .features{grid-template-columns: repeat(3,1fr)}
+    .feature{padding:18px}
+    .feature h3{margin:.2rem 0 .3rem; font-size:1.08rem}
+    .feature p{color:var(--muted); font-size:.98rem}
+    @media (max-width:960px){.features{grid-template-columns:1fr}}
+
+    /* Showcase */
+    .showcase{display:grid; grid-template-columns: 1fr 1fr; gap:18px}
+    .showcase .card{padding:12px}
+    .caption{font-size:.9rem; color:var(--muted); margin-top:.6rem}
+    @media (max-width:960px){.showcase{grid-template-columns:1fr}}
+
+    /* Specs */
+    .specs{display:grid; gap:18px; grid-template-columns: 1fr 1fr}
+    .specs .box{padding:16px}
+    .specs dl{display:grid; grid-template-columns: 180px 1fr; gap:.6rem 1rem; margin:0}
+    .specs dt{color:var(--muted)}
+    .specs dd{margin:0}
+    @media (max-width:960px){.specs{grid-template-columns:1fr} .specs dl{grid-template-columns:1fr}}
+
+    /* FAQ */
+    .faq .item{padding:14px}
+    .faq summary{cursor:pointer; font-weight:600}
+    .faq p{color:var(--muted)}
+
+    /* Footer */
+    footer{border-top:1px solid var(--border); padding:28px 0 60px; color:var(--muted)}
+    .foot{display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap}
+    .foot .links{display:flex; gap:1rem; flex-wrap:wrap}
+  </style>
+</head>
+<body>
+  <!-- ===== NAVBAR ===== -->
+  <nav class="nav" role="navigation">
+    <div class="container inner">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <strong>Shortcut Manager</strong>
+        <span class="pill" data-i18n="win">Windows 10/11</span>
+      </div>
+      <ul>
+        <li><a href="#features" data-i18n="nav.features">Features</a></li>
+        <li><a href="#screens" data-i18n="nav.screens">Screenshots</a></li>
+        <li><a href="#specs" data-i18n="nav.details">Details</a></li>
+        <li><a href="#faq" data-i18n="nav.faq">FAQ</a></li>
+        <li><a href="#buy" data-i18n="nav.buy">Buy</a></li>
+      </ul>
+      <div class="actions" style="display:flex; align-items:center; gap:.6rem">
+        <select id="langpick" class="langpick" aria-label="Language">
+          <option value="en">English</option>
+          <option value="de">Deutsch</option>
+          <option value="es">Español</option>
+          <option value="fr">Français</option>
+        </select>
+        <a class="btn" href="#buy" data-i18n="cta.buy">Buy now</a>
+        <button id="burger" class="hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobile">☰</button>
+      </div>
+    </div>
+    <div id="mobile" class="mobile" hidden>
+      <div class="langwrap">
+        <select id="langpick-m" class="langpick" aria-label="Language (mobile)">
+          <option value="en">English</option>
+          <option value="de">Deutsch</option>
+          <option value="es">Español</option>
+          <option value="fr">Français</option>
+        </select>
+      </div>
+      <a href="#features" data-i18n="nav.features">Features</a>
+      <a href="#screens" data-i18n="nav.screens">Screenshots</a>
+      <a href="#specs" data-i18n="nav.details">Details</a>
+      <a href="#faq" data-i18n="nav.faq">FAQ</a>
+      <a href="#buy" data-i18n="nav.buy">Buy</a>
+      <div class="cta"><a class="btn" href="#buy" data-i18n="cta.buy">Buy now</a></div>
+    </div>
+  </nav>
+
+  <!-- ===== HERO ===== -->
+  <header class="hero">
+    <div class="container wrap">
+      <div>
+        <span class="badge" data-i18n="badge.new">New · v0.41</span>
+        <h1 class="headline" data-i18n="hero.h">Launch anything with one key.<br/>Apps, folders, websites — <em>blazing fast</em>.</h1>
+        <p class="sub" data-i18n="hero.p">The <strong>Shortcut Manager</strong> for Windows creates custom key combos for programs, files, folders, scripts and URLs. Modern UI, two startup modes (Fast/Standard), multilingual (EN/DE/ES/FR) and built for productivity.</p>
+        <div class="cta-row">
+          <a class="btn" href="#buy" data-i18n="cta.buy">Buy now</a>
+          <a class="btn secondary" href="#screens" data-i18n="cta.screens">View screenshots</a>
+        </div>
+        <p class="sub" style="margin-top:.7rem" data-i18n="hero.note">No subscription. One-time purchase – lifetime use.</p>
+      </div>
+      <div class="card shot">
+        <img src="./Screenshot 2025-09-04 192748.png" alt="Shortcut Manager – main window (screenshot)" />
+        <div class="caption" data-i18n="hero.cap">Add hotkeys, assign targets and start in <strong>Fast Mode</strong> or <strong>Standard Mode</strong>.</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== FEATURES ===== -->
+  <main>
+    <section id="features">
+      <div class="container">
+        <h2 class="section-title" data-i18n="feat.title">Why Shortcut Manager?</h2>
+        <p class="section-sub" data-i18n="feat.sub">Click less, do more. Exactly the features you need every day — without bloat.</p>
+        <div class="grid features">
+          <div class="card feature"><h3 data-i18n="feat.f1.t">Any target</h3><p data-i18n="feat.f1.p">Launch <strong>apps</strong>, open <strong>folders/files</strong>, trigger <strong>websites</strong> or run <strong>scripts</strong> — all with custom hotkeys.</p></div>
+          <div class="card feature"><h3 data-i18n="feat.f2.t">Fast & Standard Mode</h3><p data-i18n="feat.f2.p"><strong>Fast Mode</strong> uses Windows Task Scheduler for turbo startup (admin-related). <strong>Standard Mode</strong> runs via Startup folder — no admin rights needed.</p></div>
+          <div class="card feature"><h3 data-i18n="feat.f3.t">Multilingual UI</h3><p data-i18n="feat.f3.p">Interface in <strong>English, German, Spanish, French</strong> (switchable). Clean UI, clear icons and crisp text — even on high DPI.</p></div>
+          <div class="card feature"><h3 data-i18n="feat.f4.t">Themes & UX</h3><p data-i18n="feat.f4.p">Modern, calm design with focus. Subtle animations and a tidy layout improve usability.</p></div>
+          <div class="card feature"><h3 data-i18n="feat.f5.t">Persistent storage</h3><p data-i18n="feat.f5.p">Your settings and hotkeys are safely stored in <strong>AppData</strong> (JSON). Updates keep your configuration.</p></div>
+          <div class="card feature"><h3 data-i18n="feat.f6.t">Stable & lightweight</h3><p data-i18n="feat.f6.p">Built with <strong>Python + AutoHotkey v2</strong>. Lean, resource‑friendly and reliable for daily use.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SHOWCASE / SCREENSHOTS ===== -->
+    <section id="screens">
+      <div class="container">
+        <h2 class="section-title" data-i18n="shots.title">Screenshots</h2>
+        <p class="section-sub" data-i18n="shots.sub">Live captures from the app interface.</p>
+        <div class="showcase">
+          <div class="card"><img src="./Screenshot 2025-09-04 203547.png" alt="Hotkey list — overview" /><div class="caption" data-i18n="shots.c1">All shortcuts at a glance — add, edit, delete.</div></div>
+          <div class="card"><img src="./Screenshot 2025-09-04 203617.png" alt="Create shortcut — choose target" /><div class="caption" data-i18n="shots.c2">Choose target type: app, folder, file, URL or script. Simple and clear.</div></div>
+          <div class="card"><img src="./Screenshot 2025-09-04 203904 (1).png" alt="Settings — language & startup" /><div class="caption" data-i18n="shots.c3">Settings: language, startup mode (Fast/Standard), launch at boot and more.</div></div>
+          <div class="card"><img src="./Screenshot 2025-09-04 203904 (2).png" alt="Admin-aware actions" /><div class="caption" data-i18n="shots.c4">Admin-aware buttons: only shown when relevant.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SPECS / DETAILS ===== -->
+    <section id="specs">
+      <div class="container">
+        <h2 class="section-title" data-i18n="specs.title">Details & Requirements</h2>
+        <p class="section-sub" data-i18n="specs.sub">Everything you want to know before buying — compact and clear.</p>
+        <div class="specs">
+          <div class="card box">
+            <h3 data-i18n="specs.t1">Technical specs</h3>
+            <dl>
+              <dt data-i18n="specs.os.k">Supported systems</dt><dd data-i18n="specs.os.v">Windows 10/11 (x64 recommended)</dd>
+              <dt data-i18n="specs.lang.k">Languages</dt><dd data-i18n="specs.lang.v">English, German, Spanish, French</dd>
+              <dt data-i18n="specs.modes.k">Startup modes</dt><dd data-i18n="specs.modes.v">Fast (Task Scheduler), Standard (Startup folder)</dd>
+              <dt data-i18n="specs.store.k">Storage</dt><dd data-i18n="specs.store.v">AppData (JSON configuration)</dd>
+              <dt data-i18n="specs.dep.k">Dependencies</dt><dd data-i18n="specs.dep.v">No manual installs necessary — fully bundled</dd>
+              <dt data-i18n="specs.res.k">Resources</dt><dd data-i18n="specs.res.v">Very low CPU/RAM usage</dd>
+            </dl>
+          </div>
+          <div class="card box">
+            <h3 data-i18n="specs.t2">License & Support</h3>
+            <dl>
+              <dt data-i18n="specs.lic.k">License</dt><dd data-i18n="specs.lic.v">One-time payment, private use on one device (extendable)</dd>
+              <dt data-i18n="specs.upd.k">Updates</dt><dd data-i18n="specs.upd.v">Free minor updates within the version line</dd>
+              <dt data-i18n="specs.ret.k">Refunds</dt><dd data-i18n="specs.ret.v">Digital goods are non-returnable; contact us if there’s an issue</dd>
+              <dt data-i18n="specs.sup.k">Support</dt><dd><a href="mailto:nicolas.gayhoff+shortcuts@gmail.com">nicolas.gayhoff+shortcuts@gmail.com</a></dd>
+              <dt data-i18n="specs.priv.k">Privacy</dt><dd data-i18n="specs.priv.v">No cloud requirement, no telemetry. Your shortcuts stay on your device.</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CALL TO ACTION ===== -->
+    <section id="buy">
+      <div class="container">
+        <div class="card" style="display:grid; grid-template-columns: 1.2fr .8fr; gap:18px; align-items:center; padding:16px">
+          <div>
+            <h2 class="section-title" data-i18n="cta.title">Ready to save time?</h2>
+            <p class="section-sub" data-i18n="cta.sub">Get Shortcut Manager today. One purchase — productivity every day.</p>
+            <div class="cta-row">
+              <a class="btn" href="https://nicolashorizon.gumroad.com/l/tnhuo" target="_blank" rel="noopener" data-i18n="cta.buy2">Buy on Gumroad</a>
+              <a class="btn secondary" href="#faq" data-i18n="cta.faq">Questions? See FAQ</a>
+            </div>
+            <p class="sub" style="color:var(--muted); margin-top:.7rem" data-i18n="cta.note">Secure payment via Gumroad.</p>
+          </div>
+          <div><img src="./Screenshot 2025-09-04 203904.png" alt="License — one-time purchase" /></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== FAQ ===== -->
+    <section id="faq">
+      <div class="container">
+        <h2 class="section-title" data-i18n="faq.title">Frequently Asked Questions</h2>
+        <div class="grid" style="grid-template-columns:1fr; gap:12px">
+          <details class="card item"><summary data-i18n="faq.q1">Do I need admin rights?</summary><div style="padding:10px 14px"><p data-i18n="faq.a1">Only for <strong>Fast Mode</strong> because it uses Windows Task Scheduler. <strong>Standard Mode</strong> works without admin rights via the Startup folder.</p></div></details>
+          <details class="card item"><summary data-i18n="faq.q2">Can I assign multiple hotkeys per target?</summary><div style="padding:10px 14px"><p data-i18n="faq.a2">Yes. Conflicts are detected and shown clearly.</p></div></details>
+          <details class="card item"><summary data-i18n="faq.q3">Will my settings survive updates?</summary><div style="padding:10px 14px"><p data-i18n="faq.a3">Yes. The configuration in <code>AppData</code> remains as long as you don’t reset it.</p></div></details>
+          <details class="card item"><summary data-i18n="faq.q4">Is there a portable version?</summary><div style="padding:10px 14px"><p data-i18n="faq.a4">Planned. For now, the regular installer is recommended to set up startup & shortcuts cleanly.</p></div></details>
+          <details class="card item"><summary data-i18n="faq.q5">How to uninstall correctly?</summary><div style="padding:10px 14px"><p data-i18n="faq.a5">Before uninstalling, please disable <strong>Fast Mode</strong> in settings so no scheduled tasks remain. Then remove via “Apps & Features”.</p></div></details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer>
+    <div class="container foot">
+      <div class="brand"><div class="logo" aria-hidden="true"></div><div><strong>Shortcut Manager</strong><br/><span style="font-size:.9rem; color:var(--muted)" data-i18n="foot.made">Made with ❤ in Germany</span></div></div>
+      <div class="links">
+        <a href="#features" data-i18n="nav.features">Features</a>
+        <a href="#specs" data-i18n="nav.details">Details</a>
+        <a href="#faq" data-i18n="nav.faq">FAQ</a>
+        <a href="mailto:nicolas.gayhoff+shortcuts@gmail.com">Support</a>
+        <a href="https://nicolashorizon.gumroad.com/l/tnhuo" target="_blank" rel="noopener" data-i18n="nav.buy">Buy</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ---- i18n dictionary (same content as zuvor) ----
+    const I18N = {
+      en:{
+        title:"Shortcut Manager for Windows – Start faster. Work smarter.", win:"Windows 10/11",
+        "nav.features":"Features","nav.screens":"Screenshots","nav.details":"Details","nav.faq":"FAQ","nav.buy":"Buy",
+        "cta.buy":"Buy now","badge.new":"New · v0.41",
+        "hero.h":"Launch anything with one key.<br/>Apps, folders, websites — <em>blazing fast</em>.",
+        "hero.p":"The <strong>Shortcut Manager</strong> for Windows creates custom key combos for programs, files, folders, scripts and URLs. Modern UI, two startup modes (Fast/Standard), multilingual (EN/DE/ES/FR) and built for productivity.",
+        "cta.screens":"View screenshots","hero.note":"No subscription. One-time purchase – lifetime use.",
+        "hero.cap":"Add hotkeys, assign targets and start in <strong>Fast Mode</strong> or <strong>Standard Mode</strong>.",
+        "feat.title":"Why Shortcut Manager?","feat.sub":"Click less, do more. Exactly the features you need every day — without bloat.",
+        "feat.f1.t":"Any target","feat.f1.p":"Launch <strong>apps</strong>, open <strong>folders/files</strong>, trigger <strong>websites</strong> or run <strong>scripts</strong> — all with custom hotkeys.",
+        "feat.f2.t":"Fast & Standard Mode","feat.f2.p":"<strong>Fast Mode</strong> uses Windows Task Scheduler for turbo startup (admin-related). <strong>Standard Mode</strong> runs via Startup folder — no admin rights needed.",
+        "feat.f3.t":"Multilingual UI","feat.f3.p":"Interface in <strong>English, German, Spanish, French</strong> (switchable). Clean UI, clear icons and crisp text — even on high DPI.",
+        "feat.f4.t":"Themes & UX","feat.f4.p":"Modern, calm design with focus. Subtle animations and a tidy layout improve usability.",
+        "feat.f5.t":"Persistent storage","feat.f5.p":"Your settings and hotkeys are safely stored in <strong>AppData</strong> (JSON). Updates keep your configuration.",
+        "feat.f6.t":"Stable & lightweight","feat.f6.p":"Built with <strong>Python + AutoHotkey v2</strong>. Lean, resource‑friendly and reliable for daily use.",
+        "shots.title":"Screenshots","shots.sub":"Replace the placeholders below with your images (<code>./hero-ui.png</code>, <code>./shot-1.png</code> …).",
+        "shots.c1":"All shortcuts at a glance — add, edit, delete.","shots.c2":"Choose target type: app, folder, file, URL or script. Simple and clear.",
+        "shots.c3":"Settings: language, startup mode (Fast/Standard), launch at boot and more.","shots.c4":"Admin-aware buttons: only shown when relevant.",
+        "specs.title":"Details & Requirements","specs.sub":"Everything you want to know before buying — compact and clear.",
+        "specs.t1":"Technical specs","specs.os.k":"Supported systems","specs.os.v":"Windows 10/11 (x64 recommended)",
+        "specs.lang.k":"Languages","specs.lang.v":"English, German, Spanish, French","specs.modes.k":"Startup modes","specs.modes.v":"Fast (Task Scheduler), Standard (Startup folder)",
+        "specs.store.k":"Storage","specs.store.v":"AppData (JSON configuration)","specs.dep.k":"Dependencies","specs.dep.v":"No manual installs necessary — fully bundled",
+        "specs.res.k":"Resources","specs.res.v":"Very low CPU/RAM usage","specs.t2":"License & Support",
+        "specs.lic.k":"License","specs.lic.v":"One-time payment, private use on one device (extendable)",
+        "specs.upd.k":"Updates","specs.upd.v":"Free minor updates within the version line",
+        "specs.ret.k":"Refunds","specs.ret.v":"Digital goods are non-returnable; contact us if there’s an issue",
+        "specs.sup.k":"Support","specs.priv.k":"Privacy","specs.priv.v":"No cloud requirement, no telemetry. Your shortcuts stay on your device.",
+        "cta.title":"Ready to save time?","cta.sub":"Get Shortcut Manager today. One purchase — productivity every day.",
+        "cta.buy2":"Buy on Gumroad","cta.faq":"Questions? See FAQ","cta.note":"Secure payment via Gumroad.",
+        "faq.title":"Frequently Asked Questions","faq.q1":"Do I need admin rights?","faq.a1":"Only for <strong>Fast Mode</strong> because it uses Windows Task Scheduler. <strong>Standard Mode</strong> works without admin rights via the Startup folder.",
+        "faq.q2":"Can I assign multiple hotkeys per target?","faq.a2":"Yes. Conflicts are detected and shown clearly.",
+        "faq.q3":"Will my settings survive updates?","faq.a3":"Yes. The configuration in <code>AppData</code> remains as long as you don’t reset it.",
+        "faq.q4":"Is there a portable version?","faq.a4":"Planned. For now, the regular installer is recommended to set up startup & shortcuts cleanly.",
+        "faq.q5":"How to uninstall correctly?","faq.a5":"Before uninstalling, please disable <strong>Fast Mode</strong> in settings so no scheduled tasks remain. Then remove via “Apps & Features”.",
+        "foot.made":"Made with ❤ in Germany"
+      },
+      de:{
+        title:"Shortcut Manager für Windows – Schneller starten. Smarter arbeiten.", win:"Windows 10/11",
+        "nav.features":"Funktionen","nav.screens":"Screenshots","nav.details":"Details","nav.faq":"FAQ","nav.buy":"Kaufen",
+        "cta.buy":"Jetzt kaufen","badge.new":"Neu · v0.41",
+        "hero.h":"Starte alles mit einer Taste.<br/>Apps, Ordner, Websites – <em>blitzschnell</em>.",
+        "hero.p":"Der <strong>Shortcut Manager</strong> für Windows erstellt frei wählbare Tastenkombinationen für Programme, Dateien, Ordner, Skripte und URLs. Modernes UI, zwei Startmodi (Fast/Standard), mehrsprachig (EN/DE/ES/FR) und auf Produktivität getrimmt.",
+        "cta.screens":"Screenshots ansehen","hero.note":"Kein Abo. Einmal kaufen – dauerhaft nutzen.",
+        "hero.cap":"Füge Hotkeys hinzu, weise Ziele zu und starte im <strong>Fast Mode</strong> oder <strong>Standard Mode</strong>.",
+        "feat.title":"Warum Shortcut Manager?","feat.sub":"Weniger klicken, mehr schaffen. Genau die Features, die du täglich brauchst – ohne Ballast.",
+        "feat.f1.t":"Beliebige Ziele","feat.f1.p":"Starte <strong>Programme</strong>, öffne <strong>Ordner/Dateien</strong>, rufe <strong>Websites</strong> auf oder führe <strong>Scripts</strong> aus – alles mit frei wählbaren Tastenkürzeln.",
+        "feat.f2.t":"Fast & Standard Mode","feat.f2.p":"<strong>Fast Mode</strong> nutzt den Windows Aufgabenplaner (Admin-relevant). <strong>Standard Mode</strong> läuft über den Autostart-Ordner – ohne Adminrechte.",
+        "feat.f3.t":"Mehrsprachig","feat.f3.p":"Oberfläche in <strong>Englisch, Deutsch, Spanisch, Französisch</strong> (umschaltbar).", 
+        "feat.f4.t":"Themes & UX","feat.f4.p":"Modernes, ruhiges Design mit Fokus. Sanfte Animationen und ein aufgeräumtes Layout.",
+        "feat.f5.t":"Dauerhafte Speicherung","feat.f5.p":"Einstellungen sicher in <strong>AppData</strong> (JSON). Updates behalten deine Konfiguration.",
+        "feat.f6.t":"Stabil & leicht","feat.f6.p":"Entwickelt mit <strong>Python + AutoHotkey v2</strong>.",
+        "shots.title":"Screenshots","shots.sub":"Ersetze die Platzhalter (<code>hero-ui.png</code>, <code>shot-1.png</code> …).",
+        "shots.c1":"Alle Shortcuts im Blick – hinzufügen, bearbeiten, löschen.",
+        "shots.c2":"Zieltyp wählen: App, Ordner, Datei, URL oder Script.",
+        "shots.c3":"Einstellungen: Sprache, Startmodus, Autostart u. v. m.",
+        "shots.c4":"Admin-bewusste Buttons: nur sichtbar, wenn sinnvoll.",
+        "specs.title":"Details & Voraussetzungen","specs.sub":"Alles Wichtige vor dem Kauf – kompakt.",
+        "specs.t1":"Technische Daten","specs.os.k":"Unterstützte Systeme","specs.os.v":"Windows 10/11 (x64 empfohlen)",
+        "specs.lang.k":"Sprachen","specs.lang.v":"Englisch, Deutsch, Spanisch, Französisch",
+        "specs.modes.k":"Startmodi","specs.modes.v":"Fast (Aufgabenplaner), Standard (Autostart)",
+        "specs.store.k":"Speicherort","specs.store.v":"AppData (JSON)",
+        "specs.dep.k":"Abhängigkeiten","specs.dep.v":"Keine manuellen Installationen nötig — vollständig gebündelt",
+        "specs.res.k":"Ressourcen","specs.res.v":"Sehr geringe CPU-/RAM-Nutzung",
+        "specs.t2":"Lizenz & Support","specs.lic.k":"Lizenz","specs.lic.v":"Einmalzahlung, private Nutzung auf einem Gerät (erweiterbar)",
+        "specs.upd.k":"Updates","specs.upd.v":"Kostenlose Minor-Updates","specs.ret.k":"Rückgabe","specs.ret.v":"Digitale Produkte sind vom Widerruf ausgenommen; bei Problemen bitte melden",
+        "specs.sup.k":"Support","specs.priv.k":"Datenschutz","specs.priv.v":"Keine Cloud-Pflicht, keine Telemetrie.",
+        "cta.title":"Bereit, Zeit zu sparen?","cta.sub":"Hol dir Shortcut Manager heute.",
+        "cta.buy2":"Jetzt auf Gumroad kaufen","cta.faq":"Fragen? Sieh in die FAQ","cta.note":"Bezahlung sicher über Gumroad.",
+        "faq.title":"Häufige Fragen","faq.q1":"Benötige ich Adminrechte?","faq.a1":"Nur für <strong>Fast Mode</strong>. <strong>Standard Mode</strong> funktioniert ohne Adminrechte.",
+        "faq.q2":"Mehrere Hotkeys pro Ziel?","faq.a2":"Ja, Konflikte werden angezeigt.",
+        "faq.q3":"Bleiben Einstellungen erhalten?","faq.a3":"Ja, in <code>AppData</code>.",
+        "faq.q4":"Portable Version?","faq.a4":"Geplant.",
+        "faq.q5":"Richtig deinstallieren?","faq.a5":"<strong>Fast Mode</strong> vorher deaktivieren, dann über „Apps & Features“ entfernen.",
+        "foot.made":"Made with ❤ in Germany"
+      },
+      es:{
+        title:"Shortcut Manager para Windows – Empieza más rápido. Trabaja mejor.", win:"Windows 10/11",
+        "nav.features":"Funciones","nav.screens":"Capturas","nav.details":"Detalles","nav.faq":"FAQ","nav.buy":"Comprar",
+        "cta.buy":"Comprar ahora","badge.new":"Nuevo · v0.41",
+        "hero.h":"Lanza cualquier cosa con una sola tecla.<br/>Aplicaciones, carpetas, webs — <em>rapidísimo</em>.",
+        "hero.p":"<strong>Shortcut Manager</strong> crea combinaciones personalizadas…",
+        "cta.screens":"Ver capturas","hero.note":"Sin suscripción. Pago único.",
+        "hero.cap":"Añade atajos, asigna destinos…",
+        "feat.title":"¿Por qué Shortcut Manager?","feat.sub":"Menos clics, más trabajo.",
+        "feat.f1.t":"Cualquier destino","feat.f1.p":"Apps, carpetas/archivos, webs o scripts.",
+        "feat.f2.t":"Fast y Standard Mode","feat.f2.p":"Fast usa el Programador; Standard la carpeta Inicio.",
+        "feat.f3.t":"Interfaz multilingüe","feat.f3.p":"Inglés, alemán, español, francés.",
+        "feat.f4.t":"Temas y UX","feat.f4.p":"Diseño moderno y sereno.",
+        "feat.f5.t":"Almacenamiento persistente","feat.f5.p":"En AppData (JSON).",
+        "feat.f6.t":"Ligero y estable","feat.f6.p":"Python + AutoHotkey v2.",
+        "shots.title":"Capturas","shots.sub":"Sustituye los marcadores.",
+        "shots.c1":"Todos los atajos de un vistazo.","shots.c2":"Elige el tipo de destino.","shots.c3":"Ajustes principales.","shots.c4":"Botones sensibles a admin.",
+        "specs.title":"Detalles y requisitos","specs.sub":"Todo lo importante antes de comprar.",
+        "specs.t1":"Especificaciones técnicas","specs.os.k":"Sistemas compatibles","specs.os.v":"Windows 10/11 (x64 recomendado)",
+        "specs.lang.k":"Idiomas","specs.lang.v":"Inglés, alemán, español, francés",
+        "specs.modes.k":"Modos","specs.modes.v":"Fast (Programador), Standard (Inicio)",
+        "specs.store.k":"Almacenamiento","specs.store.v":"AppData (JSON)",
+        "specs.dep.k":"Dependencias","specs.dep.v":"Todo incluido",
+        "specs.res.k":"Recursos","specs.res.v":"Muy bajo uso de CPU/RAM",
+        "specs.t2":"Licencia y soporte","specs.lic.k":"Licencia","specs.lic.v":"Pago único, un dispositivo (ampliable)",
+        "specs.upd.k":"Actualizaciones","specs.upd.v":"Actualizaciones menores gratuitas",
+        "specs.ret.k":"Reembolsos","specs.ret.v":"No reembolsable salvo incidencias",
+        "specs.sup.k":"Soporte","specs.priv.k":"Privacidad","specs.priv.v":"Sin nube obligatoria, sin telemetría.",
+        "cta.title":"¿Listo para ahorrar tiempo?","cta.sub":"Consíguelo hoy.","cta.buy2":"Comprar en Gumroad","cta.faq":"¿Dudas? FAQ","cta.note":"Pago seguro con Gumroad.",
+        "faq.title":"Preguntas frecuentes","faq.q1":"¿Necesito admin?","faq.a1":"Solo para Fast.","faq.q2":"¿Varios atajos?","faq.a2":"Sí.","faq.q3":"¿Se guardan ajustes?","faq.a3":"Sí.","faq.q4":"¿Portable?","faq.a4":"Planeada.","faq.q5":"¿Desinstalar?","faq.a5":"Desactiva Fast antes.",
+        "foot.made":"Hecho con ❤ en Alemania"
+      },
+      fr:{
+        title:"Shortcut Manager pour Windows – Démarrez plus vite. Travaillez mieux.", win:"Windows 10/11",
+        "nav.features":"Fonctionnalités","nav.screens":"Captures","nav.details":"Détails","nav.faq":"FAQ","nav.buy":"Acheter",
+        "cta.buy":"Acheter maintenant","badge.new":"Nouveau · v0.41",
+        "hero.h":"Lancez tout avec une seule touche.<br/>Apps, dossiers, sites — <em>ultra‑rapide</em>.",
+        "hero.p":"<strong>Shortcut Manager</strong> crée des raccourcis personnalisés…",
+        "cta.screens":"Voir les captures","hero.note":"Aucun abonnement. Achat unique.",
+        "hero.cap":"Ajoutez des raccourcis, assignez des cibles…",
+        "feat.title":"Pourquoi Shortcut Manager ?","feat.sub":"Moins de clics, plus d’efficacité.",
+        "feat.f1.t":"N’importe quelle cible","feat.f1.p":"Apps, dossiers/fichiers, sites ou scripts.",
+        "feat.f2.t":"Fast & Standard Mode","feat.f2.p":"Fast utilise le Planificateur ; Standard le dossier Démarrage.",
+        "feat.f3.t":"Interface multilingue","feat.f3.p":"Anglais, allemand, espagnol, français.",
+        "feat.f4.t":"Thèmes & UX","feat.f4.p":"Design moderne et apaisé.",
+        "feat.f5.t":"Stockage persistant","feat.f5.p":"Dans AppData (JSON).",
+        "feat.f6.t":"Stable & léger","feat.f6.p":"Python + AutoHotkey v2.",
+        "shots.title":"Captures","shots.sub":"Remplacez les images.",
+        "shots.c1":"Tous les raccourcis d’un coup d’œil.","shots.c2":"Choisissez le type de cible.","shots.c3":"Paramètres principaux.","shots.c4":"Boutons sensibles aux droits admin.",
+        "specs.title":"Détails & prérequis","specs.sub":"L’essentiel avant l’achat.",
+        "specs.t1":"Spécifications techniques","specs.os.k":"Systèmes pris en charge","specs.os.v":"Windows 10/11 (x64 recommandé)",
+        "specs.lang.k":"Langues","specs.lang.v":"Anglais, allemand, espagnol, français",
+        "specs.modes.k":"Modes","specs.modes.v":"Fast (Planificateur), Standard (Démarrage)",
+        "specs.store.k":"Stockage","specs.store.v":"AppData (JSON)",
+        "specs.dep.k":"Dépendances","specs.dep.v":"Tout inclus",
+        "specs.res.k":"Ressources","specs.res.v":"Très faible utilisation CPU/RAM",
+        "specs.t2":"Licence & support","specs.lic.k":"Licence","specs.lic.v":"Achat unique, un appareil (extensible)",
+        "specs.upd.k":"Mises à jour","specs.upd.v":"Mises à jour mineures gratuites",
+        "specs.ret.k":"Remboursements","specs.ret.v":"Non remboursable sauf incident",
+        "specs.sup.k":"Support","specs.priv.k":"Confidentialité","specs.priv.v":"Pas de cloud obligatoire, pas de télémétrie.",
+        "cta.title":"Prêt à gagner du temps ?","cta.sub":"Obtenez‑le aujourd’hui.","cta.buy2":"Acheter sur Gumroad","cta.faq":"Des questions ? FAQ","cta.note":"Paiement sécurisé via Gumroad.",
+        "faq.title":"Questions fréquentes","faq.q1":"Droits admin ?","faq.a1":"Seulement pour Fast.","faq.q2":"Plusieurs raccourcis ?","faq.a2":"Oui.","faq.q3":"Réglages conservés ?","faq.a3":"Oui.","faq.q4":"Version portable ?","faq.a4":"Prévue.","faq.q5":"Désinstaller ?","faq.a5":"Désactivez Fast avant.",
+        "foot.made":"Fait avec ❤ en Allemagne"
+      }
+    };
+
+    function applyI18n(lang){
+      const dict = I18N[lang] || I18N.en;
+      document.documentElement.lang = lang;
+      document.title = dict.title;
+      document.querySelectorAll('[data-i18n]').forEach(el=>{ const k = el.getAttribute('data-i18n'); if(dict[k]) el.innerHTML = dict[k]; });
+      for(const id of ['langpick','langpick-m']){ const s = document.getElementById(id); if(s) s.value = lang; }
+      localStorage.setItem('lang', lang);
+    }
+    function detectLang(){
+      const saved = localStorage.getItem('lang'); if(saved && I18N[saved]) return saved;
+      const nav = (navigator.language||'en').toLowerCase(); if(nav.startsWith('de')) return 'de'; if(nav.startsWith('es')) return 'es'; if(nav.startsWith('fr')) return 'fr'; return 'en';
+    }
+    const initialLang = detectLang();
+    applyI18n(initialLang);
+
+    // Language pickers
+    document.getElementById('langpick')?.addEventListener('change', e=> applyI18n(e.target.value));
+    document.getElementById('langpick-m')?.addEventListener('change', e=> applyI18n(e.target.value));
+
+    // Mobile menu toggle + scroll state
+    const burger = document.getElementById('burger');
+    const mobile = document.getElementById('mobile');
+    burger?.addEventListener('click', ()=>{
+      mobile.classList.toggle('open');
+      const isOpen = mobile.classList.contains('open');
+      burger.setAttribute('aria-expanded', String(isOpen));
+      // toggle hidden attr for better a11y
+      if(isOpen){ mobile.removeAttribute('hidden'); } else { mobile.setAttribute('hidden',''); }
+    });
+
+    const nav = document.querySelector('.nav');
+    const onScroll = ()=>{
+      if(window.scrollY > 8){ nav.classList.add('is-scrolled'); }
+      else{ nav.classList.remove('is-scrolled'); }
+    };
+    window.addEventListener('scroll', onScroll, {passive:true});
+    onScroll();
